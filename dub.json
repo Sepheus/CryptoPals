@@ -1,0 +1,9 @@
+{
+	"name": "crypto",
+	"authors": [
+		"Sepheus"
+	],
+	"description": "CryptoPals Challenges",
+	"copyright": "Copyright © 2018, Sepheus",
+	"license": "proprietary"
+}
