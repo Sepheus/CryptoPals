@@ -62,6 +62,14 @@ ubyte[] bruteXOR(ubyte[] message) {
         .reduce!((a,b) => a.score >= b.score ? a : b);
 }
 
+string xorDetect(string input) {
+    import std.string : splitLines;
+	return cast(string)input
+			.splitLines
+			.map!(m => m.bruteXOR)
+			.reduce!((a,b) => a.score >= b.score ? a : b );
+}
+
 unittest {
     string b64Output = 
         "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
