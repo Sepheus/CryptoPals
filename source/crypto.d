@@ -5,6 +5,12 @@ import std.conv : to, parse;
 import std.range : chunks, enumerate;
 import std.array : array, join;
 
+struct cryptoPacket {
+    ubyte[] bytes;
+    ubyte[] key;
+    string plainText;
+}
+
 ubyte[] hexToBytes(const string hex) pure {
     return hex
         .chunks(2)
@@ -87,14 +93,33 @@ uint countBits(const ubyte input) pure {
 }
 
 uint distance(const string a, const string b) pure {
-    return a.xorEncrypt(b)
+    return (cast(ubyte[])a).distance(cast(ubyte[])b);
+}
+
+uint distance(const ubyte[] a, const ubyte[] b) pure {
+    return a.xor(b)
             .map!(countBits)
             .sum;
 }
 
 ubyte[] breakXOR(const ubyte[] message) {
-    2.iota(40)
-     .map!(size => message[0 .. size].distance(message[size .. size+size] / size))
+    import std.range : iota, transposed;
+    immutable keySize = 
+    2.iota(6)
+        .map!(size => [size,  message[0 .. size].distance(message[size .. size+size]) / size])
+        .reduce!((a,b) => a[1] < b[1] ? a : b )[0];
+    message
+        .chunks(keySize)
+        .array
+        .transposed
+        .map!(n => n.array)
+        .map!(bruteXOR)
+        .array
+        .transposed
+        .writeln;
+        //.map!(map!(n => n + 1))
+        //.writeln;
+    return cast(ubyte[])"wokka wokka!!!";
 }
 
 unittest {
@@ -107,7 +132,8 @@ unittest {
     ubyte[] xorOutput = ("1c0111001f010100061a024b53535009181c").hexToBytes.xor("686974207468652062756c6c277320657965".hexToBytes);
     assert(xorOutput.toHex == "746865206b696420646f6e277420706c6179");
     assert(xorOutput == "the kid don't play");
-    assert("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736".bruteXOR == "Cooking MC's like a pound of bacon");
-    assert("Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal".xorEncrypt("ICE").toHex == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f");
-    assert("this is a test".distance("wokka wokka!!!") == 37);
+    static assert("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736".bruteXOR == "Cooking MC's like a pound of bacon");
+    static assert("Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal".xorEncrypt("ICE").toHex == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f");
+    static assert("this is a test".distance("wokka wokka!!!") == 37);
+    assert("wokka wokka!!!".xorEncrypt("glumf").breakXOR == "wokka wokka!!!");
 }
