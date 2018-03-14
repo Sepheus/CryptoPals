@@ -4,6 +4,7 @@ import std.algorithm : map, each, filter, reduce, sum;
 import std.conv : to, parse;
 import std.range : chunks, enumerate;
 import std.array : array, join;
+import std.typecons;
 
 struct CryptoPacket {
     ubyte[] bytes;
@@ -113,8 +114,13 @@ uint distance(const ubyte[] a, const ubyte[] b) pure {
             .sum;
 }
 
-ulong findKeySize(const ubyte[] message) {
+uint distance(const ubyte[][] block) pure {
+    return block[0].distance(block[1]);
+}
+
+ulong findKeySize(const ubyte[] message) pure {
     import std.range : iota, slide, take;
+    alias blockTuple = Tuple!(ulong, "size", uint, "distance");
     return 2.iota(40)
             .map!(n => message
                         .chunks(n)
@@ -122,13 +128,14 @@ ulong findKeySize(const ubyte[] message) {
                         .take(8)
             )
             .map!(blocks => blocks
-                                .map!(block => [block[0].length, block[0].distance(block[1]) / block[0].length])
-                                .reduce!((a,b) => [a[0],a[1]+b[1]])
+                                .map!(block => blockTuple(block.front.length, block.array.distance / block.front.length))
+                                .reduce!((a,b) => blockTuple(a.size, a.distance + b.distance))
             )
-            .reduce!((a,b) => a[1] < b[1] ? a : b )[0];
+            .reduce!((a,b) => a.distance < b.distance ? a : b )
+            .size;
 }
 
-CryptoPacket breakXOR(const ubyte[] message) {
+CryptoPacket breakXOR(const ubyte[] message) pure {
     import std.range : transposed;
     immutable keySize = message.findKeySize;
     return message
@@ -155,5 +162,5 @@ unittest {
     static assert("Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal".xorEncrypt("ICE").bytes.toHex == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f");
     static assert("this is a test".distance("wokka wokka!!!") == 37);
     string lorem = "On the other hand, we denounce with righteous indignation and dislike men who are so beguiled and demoralized by the charms of pleasure of the moment, so blinded by desire, that they cannot foresee the pain and trouble that are bound to ensue; and equal blame belongs to those who fail in their duty through weakness of will, which is the same as saying through shrinking from toil and pain. These cases are perfectly simple and easy to distinguish. In a free hour, when our power of choice is untrammelled and when nothing prevents our being able to do what we like best, every pleasure is to be welcomed and every pain avoided. But in certain circumstances and owing to the claims of duty or the obligations of business it will frequently occur that pleasures have to be repudiated and annoyances accepted. The wise man therefore always holds in these matters to this principle of selection: he rejects pleasures to secure other greater pleasures, or else he endures pains to avoid worse pains.";
-    assert(lorem.xorEncrypt("zero").bytes.breakXOR.key == cast(ubyte[])"zero");
+    assert(lorem.xorEncrypt("Yabba dabba doo CHICKEN!").bytes.breakXOR.key == cast(ubyte[])"Yabba dabba doo CHICKEN!");
 }
