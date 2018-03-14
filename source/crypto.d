@@ -120,7 +120,7 @@ uint distance(const ubyte[][] block) pure {
 
 ulong findKeySize(const ubyte[] message) pure {
     import std.range : iota, slide, take;
-    alias blockTuple = Tuple!(ulong, "size", uint, "distance");
+    alias blockTuple = Tuple!(ulong, "size", uint, "fitness");
     return 2.iota(40)
             .map!(n => message
                         .chunks(n)
@@ -129,9 +129,9 @@ ulong findKeySize(const ubyte[] message) pure {
             )
             .map!(blocks => blocks
                                 .map!(block => blockTuple(block.front.length, block.array.distance / block.front.length))
-                                .reduce!((a,b) => blockTuple(a.size, a.distance + b.distance))
+                                .reduce!((a,b) => blockTuple(a.size, a.fitness + b.fitness))
             )
-            .reduce!((a,b) => a.distance < b.distance ? a : b )
+            .reduce!((a,b) => a.fitness < b.fitness ? a : b )
             .size;
 }
 
