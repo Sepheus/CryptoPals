@@ -137,7 +137,7 @@ ulong findKeySize(const ubyte[] message) pure {
 
 CryptoPacket breakXOR(const ubyte[] message) pure {
     import std.range : transposed;
-    immutable keySize = message.findKeySize;
+    immutable keySize = message.findKeySize.to!size_t;
     return message
         .chunks(keySize)
         .array
