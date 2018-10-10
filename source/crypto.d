@@ -145,7 +145,8 @@ CryptoPacket breakXOR(const ubyte[] message) pure {
         .map!(n => n.array.bruteXOR.key)
         .array
         .transposed
-        .map!(k => message.xor(k.array)).array[0];
+        .map!(k => message.xor(k.array))
+        .front;
 }
 
 unittest {

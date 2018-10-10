@@ -12,3 +12,4 @@ crypto-test-*
 *.o
 *.obj
 *.lst
+crypto
