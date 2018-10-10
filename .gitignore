@@ -13,3 +13,4 @@ crypto-test-*
 *.obj
 *.lst
 crypto
+.vscode
